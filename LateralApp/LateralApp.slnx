@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LateralApp.Client/LateralApp.Client.csproj" />
+  <Project Path="LateralApp/LateralApp.csproj" />
+</Solution>
