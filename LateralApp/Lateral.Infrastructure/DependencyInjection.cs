@@ -1,3 +1,6 @@
+using Lateral.Domain.Entities;
+using Lateral.Domain.Interfaces;
+using Lateral.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lateral.Infrastructure;
@@ -9,7 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        // Registrar repositorios, DbContext, servicios externos, etc.
+        services.AddSingleton<IProductRepository, ProductRepository>();
+
         return services;
     }
 }
