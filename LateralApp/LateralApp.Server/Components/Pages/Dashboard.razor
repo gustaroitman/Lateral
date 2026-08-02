@@ -1,0 +1,43 @@
+@page "/dashboard"
+@rendermode InteractiveServer
+@using Lateral.Application.Dashboard
+@using LateralApp.Components.Shared
+@inject IDashboardService DashboardService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1 class="mb-4">Dashboard</h1>
+
+@if (_stats is null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <StatCard Title="Total Products"
+                      Value="@_stats.TotalProducts.ToString()"
+                      Color="#0d6efd" />
+        </div>
+        <div class="col-md-4">
+            <StatCard Title="Active Products"
+                      Value="@_stats.ActiveProducts.ToString()"
+                      Color="#198754" />
+        </div>
+        <div class="col-md-4">
+            <StatCard Title="Inventory Value"
+                      Value="@_stats.InventoryValue.ToString("C")"
+                      Color="#6f42c1" />
+        </div>
+    </div>
+}
+
+@code {
+    private DashboardStats? _stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stats = await DashboardService.GetStatsAsync();
+    }
+}

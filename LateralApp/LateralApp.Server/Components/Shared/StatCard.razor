@@ -1,0 +1,12 @@
+<div class="card text-white mb-3" style="background-color: @Color;">
+    <div class="card-body">
+        <h6 class="card-title text-uppercase fw-semibold opacity-75">@Title</h6>
+        <p class="card-text fs-2 fw-bold mb-0">@Value</p>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Color { get; set; } = "#0d6efd";
+}

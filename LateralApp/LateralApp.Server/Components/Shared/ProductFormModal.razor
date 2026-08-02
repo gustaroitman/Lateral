@@ -1,0 +1,58 @@
+@using Lateral.Application.Products
+@using Microsoft.AspNetCore.Components.Forms
+
+@if (Visible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(Model.Id == Guid.Empty ? "New Product" : "Edit Product")</h5>
+                    <button type="button" class="btn-close" @onclick="OnClose"></button>
+                </div>
+                <EditForm Model="Model" OnValidSubmit="OnValidSubmit">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="Model.Name" />
+                            <ValidationMessage For="() => Model.Name" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <InputNumber class="form-control" @bind-Value="Model.Price" />
+                            <ValidationMessage For="() => Model.Price" class="text-danger small" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <InputNumber class="form-control" @bind-Value="Model.Quantity" />
+                            <ValidationMessage For="() => Model.Quantity" class="text-danger small" />
+                        </div>
+                        <div class="form-check">
+                            <InputCheckbox class="form-check-input" @bind-Value="Model.IsActive" id="isActiveCheck" />
+                            <label class="form-check-label" for="isActiveCheck">Active</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="OnClose">Cancel</button>
+                        <button type="submit" class="btn btn-primary" disabled="@IsSaving">
+                            @if (IsSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            Save
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ProductDto Model { get; set; } = new();
+    [Parameter, EditorRequired] public EventCallback OnClose { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnValidSubmit { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public bool IsSaving { get; set; }
+}

@@ -1,7 +1,12 @@
+using Lateral.Application;
+using Lateral.Infrastructure;
 using LateralApp.Web.Pages;
 using LateralApp.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

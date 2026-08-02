@@ -1,3 +1,5 @@
+using Lateral.Application.Dashboard;
+using Lateral.Application.Products;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lateral.Application;
@@ -9,7 +11,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Registrar casos de uso aquí
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IProductService, ProductService>();
         return services;
     }
 }
