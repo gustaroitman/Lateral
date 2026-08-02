@@ -5,10 +5,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <RootNamespace>LateralApp</RootNamespace>
+    <AssemblyName>LateralApp.Server</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LateralApp.Client\LateralApp.Client.csproj" />
+    <ProjectReference Include="..\LateralApp.Client\LateralApp.Web.csproj" />
+    <ProjectReference Include="..\Lateral.Application\Lateral.Application.csproj" />
+    <ProjectReference Include="..\Lateral.Infrastructure\Lateral.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" />
   </ItemGroup>
 

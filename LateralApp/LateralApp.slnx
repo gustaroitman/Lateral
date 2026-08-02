@@ -1,4 +1,7 @@
 <Solution>
-  <Project Path="LateralApp.Client/LateralApp.Client.csproj" />
-  <Project Path="LateralApp/LateralApp.csproj" />
+  <Project Path="LateralApp.Client/LateralApp.Web.csproj" />
+  <Project Path="LateralApp.Server/LateralApp.Server.csproj" />
+  <Project Path="Lateral.Domain/Lateral.Domain.csproj" />
+  <Project Path="Lateral.Application/Lateral.Application.csproj" />
+  <Project Path="Lateral.Infrastructure/Lateral.Infrastructure.csproj" />
 </Solution>
