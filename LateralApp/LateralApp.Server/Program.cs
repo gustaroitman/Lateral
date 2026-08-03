@@ -2,6 +2,7 @@ using Lateral.Application;
 using Lateral.Infrastructure;
 using LateralApp.Web.Pages;
 using LateralApp.Components;
+using LateralApp.Server.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
+
+await DataSeeder.SeedProductsAsync(app.Services, app.Environment.WebRootPath);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

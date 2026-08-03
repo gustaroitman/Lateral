@@ -31,26 +31,29 @@ else
     <div class="row g-2 align-items-center mb-3">
         <div class="col-md-6">
             <input class="form-control" type="search" placeholder="Search by name..."
-                   @bind="_searchText" @bind:event="oninput" />
+                   value="@_searchText" @oninput="e => OnSearchChanged(e.Value?.ToString())" />
         </div>
         <div class="col-auto">
             <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="showActiveOnly"
-                       @bind="_showActiveOnly" />
+                       checked="@_showActiveOnly" @onchange="e => OnActiveFilterChanged((bool)e.Value!)" />
                 <label class="form-check-label" for="showActiveOnly">Active only</label>
             </div>
         </div>
+        <div class="col-auto ms-auto text-muted small">
+            @_filteredCount products &nbsp;|&nbsp; Page @_currentPage of @_totalPages
+        </div>
     </div>
 
-    @if (!_filteredProducts.Any())
+    @if (_filteredCount == 0)
     {
         <p class="text-muted">No products match the current filters.</p>
     }
     else
     {
-        <div class="table-responsive">
+        <div class="table-responsive" style="height:560px; overflow-y:auto;">
             <table class="table table-hover align-middle">
-                <thead class="table-dark">
+                <thead class="table-dark" style="position:sticky; top:0; z-index:1;">
                     <tr>
                         <th>Name</th>
                         <th class="text-end">Unit Price</th>
@@ -61,8 +64,11 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var product in _filteredProducts)
-                    {
+                    <Virtualize @ref="_virtualizeRef"
+                                ItemsProvider="ProvideProductsAsync"
+                                ItemSize="53"
+                                SpacerElement="tr"
+                                Context="product">
                         <tr @key="product.Id">
                             <td>@product.Name</td>
                             <td class="text-end">@product.Price.ToString("C")</td>
@@ -99,10 +105,36 @@ else
                                 </button>
                             </td>
                         </tr>
-                    }
+                    </Virtualize>
                 </tbody>
             </table>
         </div>
+
+        <nav class="d-flex justify-content-center mt-3" aria-label="Products pagination">
+            <ul class="pagination mb-0">
+                <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPageAsync(1)" disabled="@(_currentPage == 1)">«</button>
+                </li>
+                <li class="page-item @(_currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPageAsync(_currentPage - 1)" disabled="@(_currentPage == 1)">‹</button>
+                </li>
+
+                @foreach (var page in GetPageNumbers())
+                {
+                    var p = page;
+                    <li class="page-item @(p == _currentPage ? "active" : "")">
+                        <button class="page-link" @onclick="() => GoToPageAsync(p)">@p</button>
+                    </li>
+                }
+
+                <li class="page-item @(_currentPage == _totalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPageAsync(_currentPage + 1)" disabled="@(_currentPage == _totalPages)">›</button>
+                </li>
+                <li class="page-item @(_currentPage == _totalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPageAsync(_totalPages)" disabled="@(_currentPage == _totalPages)">»</button>
+                </li>
+            </ul>
+        </nav>
     }
 }
 
@@ -115,7 +147,7 @@ else
 @if (_productToDelete is not null)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-sm">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Confirm Delete</h5>
@@ -140,9 +172,12 @@ else
 }
 
 @code {
+    private const int PageSize = 10;
+
     private List<ProductDto>? _products;
     private ProductDto _formDto = new();
     private ProductDto? _productToDelete;
+    private Virtualize<ProductDto>? _virtualizeRef;
 
     private bool _showFormModal;
     private bool _isSaving;
@@ -150,13 +185,31 @@ else
 
     private string _searchText = string.Empty;
     private bool _showActiveOnly = true;
+    private int _currentPage = 1;
 
-    private IEnumerable<ProductDto> _filteredProducts =>
+    private IEnumerable<ProductDto> FilteredProducts =>
         _products?
             .Where(p => string.IsNullOrWhiteSpace(_searchText) ||
                         p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
             .Where(p => !_showActiveOnly || p.IsActive)
-        ?? Enumerable.Empty<ProductDto>();
+        ?? [];
+
+    private int _filteredCount => FilteredProducts.Count();
+    private int _totalPages => Math.Max(1, (int)Math.Ceiling(_filteredCount / (double)PageSize));
+
+    private ValueTask<ItemsProviderResult<ProductDto>> ProvideProductsAsync(ItemsProviderRequest request)
+    {
+        var paged = FilteredProducts
+            .Skip((_currentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        var result = new ItemsProviderResult<ProductDto>(
+            paged.Skip(request.StartIndex).Take(request.Count),
+            paged.Count);
+
+        return ValueTask.FromResult(result);
+    }
 
     protected override async Task OnInitializedAsync()
         => await LoadProductsAsync();
@@ -165,6 +218,42 @@ else
     {
         var result = await ProductService.GetAllAsync();
         _products = result.ToList();
+    }
+
+    private async Task OnSearchChanged(string? value)
+    {
+        _searchText = value ?? string.Empty;
+        await ResetPageAsync();
+    }
+
+    private async Task OnActiveFilterChanged(bool value)
+    {
+        _showActiveOnly = value;
+        await ResetPageAsync();
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        _currentPage = Math.Clamp(page, 1, _totalPages);
+        if (_virtualizeRef is not null)
+            await _virtualizeRef.RefreshDataAsync();
+    }
+
+    private async Task ResetPageAsync()
+    {
+        _currentPage = 1;
+        if (_virtualizeRef is not null)
+            await _virtualizeRef.RefreshDataAsync();
+    }
+
+    private IEnumerable<int> GetPageNumbers()
+    {
+        const int maxVisible = 5;
+        int half = maxVisible / 2;
+        int start = Math.Max(1, _currentPage - half);
+        int end = Math.Min(_totalPages, start + maxVisible - 1);
+        start = Math.Max(1, end - maxVisible + 1);
+        return Enumerable.Range(start, end - start + 1);
     }
 
     private void OpenAddModal()
@@ -188,10 +277,7 @@ else
         _errorMessage = null;
     }
 
-    private void CloseFormModal()
-    {
-        _showFormModal = false;
-    }
+    private void CloseFormModal() => _showFormModal = false;
 
     private async Task SaveProductAsync()
     {
@@ -199,13 +285,15 @@ else
         _errorMessage = null;
         try
         {
-            if (_formDto.Id != Guid.Empty)
-                await ProductService.UpdateAsync(_formDto);
-            else
+            if (_formDto.Id == Guid.Empty)
                 await ProductService.AddAsync(_formDto);
+            else
+                await ProductService.UpdateAsync(_formDto);
 
             _showFormModal = false;
             await LoadProductsAsync();
+            if (_virtualizeRef is not null)
+                await _virtualizeRef.RefreshDataAsync();
         }
         catch (RepositoryException ex)
         {
@@ -233,6 +321,8 @@ else
             };
             await ProductService.UpdateAsync(dto);
             await LoadProductsAsync();
+            if (_virtualizeRef is not null)
+                await _virtualizeRef.RefreshDataAsync();
         }
         catch (RepositoryException ex)
         {
@@ -250,21 +340,19 @@ else
         _errorMessage = null;
     }
 
-    private void CloseDeleteConfirm()
-    {
-        _productToDelete = null;
-    }
+    private void CloseDeleteConfirm() => _productToDelete = null;
 
     private async Task ConfirmDeleteAsync()
     {
         if (_productToDelete is null) return;
         _isSaving = true;
-
         try
         {
             await ProductService.DeleteAsync(_productToDelete.Id);
             _productToDelete = null;
             await LoadProductsAsync();
+            if (_virtualizeRef is not null)
+                await _virtualizeRef.RefreshDataAsync();
         }
         catch (RepositoryException ex)
         {
