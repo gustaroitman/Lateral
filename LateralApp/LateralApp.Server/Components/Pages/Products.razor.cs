@@ -10,6 +10,7 @@ public partial class Products
 {
     [Inject] private IProductService ProductService { get; set; } = default!;
     [Inject] private ToastService ToastService { get; set; } = default!;
+    [Inject] private ILogger<Products> Logger { get; set; } = default!;
 
     private const int PageSize = 10;
 
@@ -60,6 +61,7 @@ public partial class Products
     {
         var result = await ProductService.GetAllAsync();
         _products = result.ToList();
+        Logger.LogInformation("Loaded {Count} products.", _products.Count);
     }
 
     private async Task OnSearchChanged(string? value)
@@ -133,6 +135,11 @@ public partial class Products
             else
                 await ProductService.UpdateAsync(_formDto);
 
+            Logger.LogInformation(
+                isNew ? "Product '{Name}' created successfully."
+                       : "Product '{Name}' (Id: {Id}) updated successfully.",
+                _formDto.Name, _formDto.Id);
+
             _showFormModal = false;
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
@@ -141,6 +148,7 @@ public partial class Products
         }
         catch (RepositoryException ex)
         {
+            Logger.LogWarning(ex, "Failed to save product '{Name}'.", _formDto.Name);
             _errorMessage = ex.Message;
         }
         finally
@@ -164,6 +172,9 @@ public partial class Products
                 IsActive = isActive
             };
             await ProductService.UpdateAsync(dto);
+            Logger.LogInformation(
+                "Product '{Name}' (Id: {Id}) {Action}.",
+                product.Name, product.Id, isActive ? "activated" : "deactivated");
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
                 await _virtualizeRef.RefreshDataAsync();
@@ -171,6 +182,7 @@ public partial class Products
         }
         catch (RepositoryException ex)
         {
+            Logger.LogWarning(ex, "Failed to change active state for product '{Name}' (Id: {Id}).", product.Name, product.Id);
             _errorMessage = ex.Message;
         }
         finally
@@ -194,6 +206,7 @@ public partial class Products
         try
         {
             await ProductService.DeleteAsync(_productToDelete.Id);
+            Logger.LogInformation("Product '{Name}' (Id: {Id}) deleted.", _productToDelete.Name, _productToDelete.Id);
             _productToDelete = null;
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
@@ -202,6 +215,7 @@ public partial class Products
         }
         catch (RepositoryException ex)
         {
+            Logger.LogWarning(ex, "Failed to delete product '{Name}' (Id: {Id}).", _productToDelete?.Name, _productToDelete?.Id);
             _errorMessage = ex.Message;
             _productToDelete = null;
         }
