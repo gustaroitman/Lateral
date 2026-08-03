@@ -26,55 +26,84 @@
 {
     <p><em>Loading...</em></p>
 }
-else if (!_products.Any())
-{
-    <p class="text-muted">No products found. Add one to get started.</p>
-}
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Name</th>
-                    <th class="text-end">Unit Price</th>
-                    <th class="text-end">Quantity</th>
-                    <th class="text-end">Total Price</th>
-                    <th class="text-center">Active</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var product in _products)
-                {
-                    <tr @key="product.Id">
-                        <td>@product.Name</td>
-                        <td class="text-end">@product.Price.ToString("C")</td>
-                        <td class="text-end">@product.Quantity</td>
-                        <td class="text-end">@((product.Price * product.Quantity).ToString("C"))</td>
-                        <td class="text-center">
-                            @if (product.IsActive)
-                            {
-                                <span class="badge bg-success">Active</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactive</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => OpenEditModal(product)">
-                                <span class="bi bi-pencil"></span> Edit
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteConfirm(product)">
-                                <span class="bi bi-trash"></span> Delete
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="row g-2 align-items-center mb-3">
+        <div class="col-md-6">
+            <input class="form-control" type="search" placeholder="Search by name..."
+                   @bind="_searchText" @bind:event="oninput" />
+        </div>
+        <div class="col-auto">
+            <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="showActiveOnly"
+                       @bind="_showActiveOnly" />
+                <label class="form-check-label" for="showActiveOnly">Active only</label>
+            </div>
+        </div>
     </div>
+
+    @if (!_filteredProducts.Any())
+    {
+        <p class="text-muted">No products match the current filters.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Total Price</th>
+                        <th class="text-center">Active</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in _filteredProducts)
+                    {
+                        <tr @key="product.Id">
+                            <td>@product.Name</td>
+                            <td class="text-end">@product.Price.ToString("C")</td>
+                            <td class="text-end">@product.Quantity</td>
+                            <td class="text-end">@((product.Price * product.Quantity).ToString("C"))</td>
+                            <td class="text-center">
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => OpenEditModal(product)">
+                                    <span class="bi bi-pencil"></span> Edit
+                                </button>
+                                @if (product.IsActive)
+                                {
+                                    <button class="btn btn-sm btn-outline-warning me-1" @onclick="() => SetActiveAsync(product, false)">
+                                        <span class="bi bi-slash-circle"></span> Deactivate
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-success me-1" @onclick="() => SetActiveAsync(product, true)">
+                                        <span class="bi bi-check-circle"></span> Activate
+                                    </button>
+                                }
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteConfirm(product)">
+                                    <span class="bi bi-trash"></span> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 }
 
 <ProductFormModal Model="_formDto"
@@ -118,6 +147,16 @@ else
     private bool _showFormModal;
     private bool _isSaving;
     private string? _errorMessage;
+
+    private string _searchText = string.Empty;
+    private bool _showActiveOnly = true;
+
+    private IEnumerable<ProductDto> _filteredProducts =>
+        _products?
+            .Where(p => string.IsNullOrWhiteSpace(_searchText) ||
+                        p.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+            .Where(p => !_showActiveOnly || p.IsActive)
+        ?? Enumerable.Empty<ProductDto>();
 
     protected override async Task OnInitializedAsync()
         => await LoadProductsAsync();
@@ -166,6 +205,33 @@ else
                 await ProductService.AddAsync(_formDto);
 
             _showFormModal = false;
+            await LoadProductsAsync();
+        }
+        catch (RepositoryException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task SetActiveAsync(ProductDto product, bool isActive)
+    {
+        _isSaving = true;
+        _errorMessage = null;
+        try
+        {
+            var dto = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price,
+                Quantity = product.Quantity,
+                IsActive = isActive
+            };
+            await ProductService.UpdateAsync(dto);
             await LoadProductsAsync();
         }
         catch (RepositoryException ex)
