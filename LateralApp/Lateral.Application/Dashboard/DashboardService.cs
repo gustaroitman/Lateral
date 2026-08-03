@@ -1,18 +1,16 @@
-using Lateral.Domain.Interfaces;
+using Lateral.Application.Products;
 
 namespace Lateral.Application.Dashboard;
 
-public class DashboardService(IProductRepository productRepository) : IDashboardService
+public class DashboardService(IProductService productService) : IDashboardService
 {
     public async Task<DashboardStats> GetStatsAsync(CancellationToken cancellationToken = default)
     {
-        var products = await productRepository.GetAllAsync(cancellationToken);
-        var list = products.ToList();
+        var products = (await productService.GetAllAsync(cancellationToken)).ToList();
 
-        var total = list.Count;
-        var active = list.Count(p => p.IsActive);
-        var inventoryValue = list.Sum(p => p.Price * p.Quantity);
-
-        return new DashboardStats(total, active, inventoryValue);
+        return new DashboardStats(
+            products.Count,
+            products.Count(p => p.IsActive),
+            products.Sum(p => p.Price * p.Quantity));
     }
 }

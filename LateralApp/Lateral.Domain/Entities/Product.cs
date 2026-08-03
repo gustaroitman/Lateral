@@ -4,6 +4,10 @@ namespace Lateral.Domain.Entities;
 
 public class Product : BaseEntity
 {
+    public Product() { }
+
+    public Product(Guid id) : base(id) { }
+
     [Required]
     [StringLength(100)]
     public string Name { get; set; } = string.Empty;

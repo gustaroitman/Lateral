@@ -31,14 +31,13 @@ public class ProductService(IProductRepository productRepository) : IProductServ
 
     public async Task UpdateAsync(ProductDto dto, CancellationToken cancellationToken = default)
     {
-        var entity = new Product
+        var entity = new Product(dto.Id)
         {
             Name = dto.Name,
             Price = dto.Price,
             Quantity = dto.Quantity,
             IsActive = dto.IsActive
         };
-        SetId(entity, dto.Id);
         await productRepository.UpdateAsync(entity, cancellationToken);
     }
 
@@ -53,11 +52,4 @@ public class ProductService(IProductRepository productRepository) : IProductServ
         Quantity = p.Quantity,
         IsActive = p.IsActive
     };
-
-    private static void SetId(Product entity, Guid id)
-    {
-        typeof(Product).BaseType!
-            .GetProperty(nameof(Product.Id))!
-            .SetValue(entity, id);
-    }
 }

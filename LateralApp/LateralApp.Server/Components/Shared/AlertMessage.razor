@@ -1,0 +1,12 @@
+@if (Message is not null)
+{
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        @Message
+        <button type="button" class="btn-close" @onclick="OnDismiss"></button>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnDismiss { get; set; }
+}
