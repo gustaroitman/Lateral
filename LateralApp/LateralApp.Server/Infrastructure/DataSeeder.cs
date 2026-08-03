@@ -18,6 +18,7 @@ public static class DataSeeder
 
         var json = await File.ReadAllTextAsync(seedPath);
         var items = JsonSerializer.Deserialize<List<SeedItem>>(json, JsonOptions);
+
         if (items is null || items.Count == 0)
             return;
 
@@ -40,7 +41,7 @@ public static class DataSeeder
             }
             catch (RepositoryException)
             {
-                // skip if duplicate slips through
+                throw;
             }
         }
     }

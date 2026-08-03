@@ -1,8 +1,6 @@
 @page "/dashboard"
 @rendermode InteractiveServer
-@using Lateral.Application.Dashboard
 @using LateralApp.Components.Shared
-@inject IDashboardService DashboardService
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -33,11 +31,4 @@ else
     </div>
 }
 
-@code {
-    private DashboardStats? _stats;
 
-    protected override async Task OnInitializedAsync()
-    {
-        _stats = await DashboardService.GetStatsAsync();
-    }
-}
