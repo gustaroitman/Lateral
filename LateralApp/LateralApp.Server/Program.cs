@@ -3,11 +3,14 @@ using Lateral.Infrastructure;
 using LateralApp.Web.Pages;
 using LateralApp.Components;
 using LateralApp.Server.Infrastructure;
+using LateralApp.Components.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+
+builder.Services.AddSingleton<ToastService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

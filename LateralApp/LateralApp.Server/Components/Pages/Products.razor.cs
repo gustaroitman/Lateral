@@ -1,5 +1,6 @@
 using Lateral.Application.Products;
 using Lateral.Domain.Exceptions;
+using LateralApp.Components.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 
@@ -8,6 +9,7 @@ namespace LateralApp.Components.Pages;
 public partial class Products
 {
     [Inject] private IProductService ProductService { get; set; } = default!;
+    [Inject] private ToastService ToastService { get; set; } = default!;
 
     private const int PageSize = 10;
 
@@ -123,9 +125,10 @@ public partial class Products
     {
         _isSaving = true;
         _errorMessage = null;
+        bool isNew = _formDto.Id == Guid.Empty;
         try
         {
-            if (_formDto.Id == Guid.Empty)
+            if (isNew)
                 await ProductService.AddAsync(_formDto);
             else
                 await ProductService.UpdateAsync(_formDto);
@@ -134,6 +137,7 @@ public partial class Products
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
                 await _virtualizeRef.RefreshDataAsync();
+            ToastService.Show(isNew ? "Product created successfully." : "Product updated successfully.");
         }
         catch (RepositoryException ex)
         {
@@ -163,6 +167,7 @@ public partial class Products
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
                 await _virtualizeRef.RefreshDataAsync();
+            ToastService.Show(isActive ? "Product activated." : "Product deactivated.");
         }
         catch (RepositoryException ex)
         {
@@ -193,6 +198,7 @@ public partial class Products
             await LoadProductsAsync();
             if (_virtualizeRef is not null)
                 await _virtualizeRef.RefreshDataAsync();
+            ToastService.Show("Product deleted.");
         }
         catch (RepositoryException ex)
         {
