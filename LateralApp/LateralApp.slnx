@@ -4,4 +4,5 @@
   <Project Path="Lateral.Domain/Lateral.Domain.csproj" />
   <Project Path="Lateral.Application/Lateral.Application.csproj" />
   <Project Path="Lateral.Infrastructure/Lateral.Infrastructure.csproj" />
+  <Project Path="LateralApp.Tests.Components/LateralApp.Tests.csproj" />
 </Solution>

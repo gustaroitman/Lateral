@@ -1,0 +1,10 @@
+global using Bunit;
+global using Xunit;
+global using NSubstitute;
+global using Microsoft.AspNetCore.Components;
+global using Microsoft.Extensions.DependencyInjection;
+global using LateralApp.Components.Shared;
+global using LateralApp.Components.Services;
+global using Lateral.Application.Products;
+global using Lateral.Application.Dashboard;
+global using Lateral.Domain.Exceptions;
